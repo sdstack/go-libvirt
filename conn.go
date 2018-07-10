@@ -38,6 +38,10 @@ func NewConn(d Driver) (*Conn, error) {
 	return c, nil
 }
 
+func (c *Conn) Close() error {
+	return c.conn.Close()
+}
+
 func (c *Conn) initConnection(d Driver) error {
 	var err error
 

@@ -9,17 +9,20 @@ import (
 
 type {{ExportName}} struct {
 	conn   *Conn
-	path dbus.ObjectPath
+	object dbus.BusObject
 	{{range .Properties}}
 	{{.Name}} {{GuessType .Name .Type DbusInterface}}{{end}}
 }
 
 // New{{ExportName}}() TODO
 func New{{ExportName}}(c *Conn, path dbus.ObjectPath) (*{{ExportName}}) {
-	return &{{ExportName}}{
-   conn: c,
-   path: path,
+	m := &{{ExportName}}{conn: c}
+	if path != "" {
+	m.object = c.conn.Object("org.libvirt", path)
+  } else {
+  m.object = c.object
   }
+	return m
 }
 
 {{range .Methods}}
@@ -27,7 +30,7 @@ func New{{ExportName}}(c *Conn, path dbus.ObjectPath) (*{{ExportName}}) {
 {{- range .Annotations}}// {{$methodName}} {{AnnotationComment .Value}}
 {{- end}}
 func (m *{{ExportName}}) {{.Name}}({{GetParamterInsProto .Args}}) ({{GetParamterOutsProto .Args}}{{with GetParamterOuts .Args}}, {{end}}err error) {
-	err = m.conn.object.Call("{{DbusInterface}}.{{.Name}}", 0{{GetParamterNames .Args}}).Store({{GetParamterOuts .Args}})
+	err = m.object.Call("{{DbusInterface}}.{{.Name}}", 0{{GetParamterNames .Args}}).Store({{GetParamterOuts .Args}})
 	return
 }
 {{end}}

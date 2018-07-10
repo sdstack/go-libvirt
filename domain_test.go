@@ -10,10 +10,17 @@ func TestListDomains(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer c.Close()
 	conn := NewConnect(c, "")
-	domain, err := conn.DomainLookupByName("winxp")
+	dpath, err := conn.DomainLookupByName("winxp")
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("%#+v\n", domain)
+	domain := NewDomain(c, dpath)
+	xml, err := domain.GetXMLDesc(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("%s\n", xml)
+
 }
