@@ -1,10 +1,18 @@
 package libvirt
 
-import "github.com/godbus/dbus"
+import (
+	"sync"
+
+	"github.com/godbus/dbus"
+)
 
 type Connect struct {
 	conn   *Conn
 	object dbus.BusObject
+	path   dbus.ObjectPath
+
+	sigs  map[<-chan *dbus.Signal]struct{}
+	sigmu sync.Mutex
 
 	Encrypted  uint
 	Hostname   string
@@ -21,7 +29,161 @@ func NewConnect(c *Conn, path dbus.ObjectPath) *Connect {
 	} else {
 		m.object = c.object
 	}
+	m.path = c.object.Path()
+
+	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+
 	return m
+}
+
+// SubscribeDomainEvent See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventCallback
+func (m *Connect) SubscribeDomainEvent(callback func(domain dbus.ObjectPath, event int32, detail int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Connect',member='DomainEvent'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Connect.DomainEvent" || 3 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(dbus.ObjectPath), v.Body[1].(int32), v.Body[2].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeDomainEvent See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventCallback
+func (m *Connect) UnSubscribeDomainEvent(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Connect',member='DomainEvent'")
+}
+
+// SubscribeNetworkEvent See https://libvirt.org/html/libvirt-libvirt-network.html#virConnectNetworkEventLifecycleCallback
+func (m *Connect) SubscribeNetworkEvent(callback func(network dbus.ObjectPath, event int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Connect',member='NetworkEvent'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Connect.NetworkEvent" || 2 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(dbus.ObjectPath), v.Body[1].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeNetworkEvent See https://libvirt.org/html/libvirt-libvirt-network.html#virConnectNetworkEventLifecycleCallback
+func (m *Connect) UnSubscribeNetworkEvent(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Connect',member='NetworkEvent'")
+}
+
+// SubscribeNodeDeviceEvent See https://libvirt.org/html/libvirt-libvirt-nodedev.html#virConnectNodeDeviceEventLifecycleCallback
+func (m *Connect) SubscribeNodeDeviceEvent(callback func(dev dbus.ObjectPath, event int32, detail int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Connect',member='NodeDeviceEvent'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Connect.NodeDeviceEvent" || 3 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(dbus.ObjectPath), v.Body[1].(int32), v.Body[2].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeNodeDeviceEvent See https://libvirt.org/html/libvirt-libvirt-nodedev.html#virConnectNodeDeviceEventLifecycleCallback
+func (m *Connect) UnSubscribeNodeDeviceEvent(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Connect',member='NodeDeviceEvent'")
+}
+
+// SubscribeSecretEvent See https://libvirt.org/html/libvirt-libvirt-secret.html#virConnectSecretEventLifecycleCallback
+func (m *Connect) SubscribeSecretEvent(callback func(secret dbus.ObjectPath, event int32, detail int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Connect',member='SecretEvent'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Connect.SecretEvent" || 3 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(dbus.ObjectPath), v.Body[1].(int32), v.Body[2].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeSecretEvent See https://libvirt.org/html/libvirt-libvirt-secret.html#virConnectSecretEventLifecycleCallback
+func (m *Connect) UnSubscribeSecretEvent(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Connect',member='SecretEvent'")
+}
+
+// SubscribeStoragePoolEvent See https://libvirt.org/html/libvirt-libvirt-storage.html#virConnectStoragePoolEventLifecycleCallback
+func (m *Connect) SubscribeStoragePoolEvent(callback func(storagePool dbus.ObjectPath, event int32, detail int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Connect',member='StoragePoolEvent'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Connect.StoragePoolEvent" || 3 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(dbus.ObjectPath), v.Body[1].(int32), v.Body[2].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeStoragePoolEvent See https://libvirt.org/html/libvirt-libvirt-storage.html#virConnectStoragePoolEventLifecycleCallback
+func (m *Connect) UnSubscribeStoragePoolEvent(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Connect',member='StoragePoolEvent'")
 }
 
 // BaselineCPU See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectBaselineCPU

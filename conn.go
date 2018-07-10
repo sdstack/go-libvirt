@@ -1,5 +1,7 @@
 package libvirt
 
+//go:generate go run gen.go
+
 import (
 	"errors"
 	"os"

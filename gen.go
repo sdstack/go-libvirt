@@ -234,15 +234,16 @@ func main() {
 			"GetParamterOutsProto": func(args []introspect.Arg) (ret string) {
 				var notFirst = false
 				for _, arg := range args {
-					if arg.Direction == "out" {
+					if arg.Direction == "out" || arg.Direction == "" {
 						if notFirst {
 							ret += ", "
 						}
 						notFirst = true
 						dtype, _ := GuessType(arg.Name, arg.Type, "")
-						ret += arg.Name + " " + dtype
 						if getKeyword(arg.Name) {
-							ret = "o" + ret
+							ret += "o" + arg.Name + " " + dtype
+						} else {
+							ret += arg.Name + " " + dtype
 						}
 					}
 				}
@@ -251,19 +252,24 @@ func main() {
 			"GetParamterInsProto": func(args []introspect.Arg) (ret string) {
 				var notFirst = false
 				for _, arg := range args {
-					if arg.Direction == "in" {
+					if arg.Direction == "in" || arg.Direction == "" {
 						if notFirst {
 							ret += ", "
 						}
 						notFirst = true
 						if strings.Contains(arg.Type, "(") {
-							ret += arg.Name + " interface{}"
+							if getKeyword(arg.Name) {
+								ret += "i" + arg.Name + " interface{}"
+							} else {
+								ret += arg.Name + " interface{}"
+							}
 						} else {
 							dtype, _ := GuessType(arg.Name, arg.Type, "")
-							ret += arg.Name + " " + dtype
-						}
-						if getKeyword(arg.Name) {
-							ret = "i" + ret
+							if getKeyword(arg.Name) {
+								ret += "i" + arg.Name + " " + dtype
+							} else {
+								ret += arg.Name + " " + dtype
+							}
 						}
 					}
 				}

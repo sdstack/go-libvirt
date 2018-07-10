@@ -1,10 +1,18 @@
 package libvirt
 
-import "github.com/godbus/dbus"
+import (
+	"sync"
+
+	"github.com/godbus/dbus"
+)
 
 type NWFilter struct {
 	conn   *Conn
 	object dbus.BusObject
+	path   dbus.ObjectPath
+
+	sigs  map[<-chan *dbus.Signal]struct{}
+	sigmu sync.Mutex
 
 	Name string
 	UUID string
@@ -18,6 +26,10 @@ func NewNWFilter(c *Conn, path dbus.ObjectPath) *NWFilter {
 	} else {
 		m.object = c.object
 	}
+	m.path = c.object.Path()
+
+	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+
 	return m
 }
 

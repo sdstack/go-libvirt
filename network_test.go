@@ -1,9 +1,6 @@
 package libvirt
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
 func TestListNetworks(t *testing.T) {
 	c, err := NewConn(DriverQEMU)
@@ -17,10 +14,9 @@ func TestListNetworks(t *testing.T) {
 		t.Fatal(err)
 	}
 	network := NewNetwork(c, npath)
-	xml, err := network.GetXMLDesc(0)
+	_, err = network.GetXMLDesc(0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("%s\n", xml)
 
 }

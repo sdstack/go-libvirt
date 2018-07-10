@@ -1,10 +1,18 @@
 package libvirt
 
-import "github.com/godbus/dbus"
+import (
+	"sync"
+
+	"github.com/godbus/dbus"
+)
 
 type Domain struct {
 	conn   *Conn
 	object dbus.BusObject
+	path   dbus.ObjectPath
+
+	sigs  map[<-chan *dbus.Signal]struct{}
+	sigmu sync.Mutex
 
 	Active        uint
 	Autostart     uint
@@ -25,7 +33,641 @@ func NewDomain(c *Conn, path dbus.ObjectPath) *Domain {
 	} else {
 		m.object = c.object
 	}
+	m.path = c.object.Path()
+
+	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+
 	return m
+}
+
+// SubscribeAgentEvent See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventAgentLifecycleCallback
+func (m *Domain) SubscribeAgentEvent(callback func(state int32, reason int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='AgentEvent'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.AgentEvent" || 2 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32), v.Body[1].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeAgentEvent See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventAgentLifecycleCallback
+func (m *Domain) UnSubscribeAgentEvent(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='AgentEvent'")
+}
+
+// SubscribeBalloonChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventBalloonChangeCallback
+func (m *Domain) SubscribeBalloonChange(callback func(actual uint64)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='BalloonChange'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.BalloonChange" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(uint64))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeBalloonChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventBalloonChangeCallback
+func (m *Domain) UnSubscribeBalloonChange(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='BalloonChange'")
+}
+
+// SubscribeBlockJob See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventBlockJobCallback Callback was registered using VIR_DOMAIN_EVENT_ID_BLOCK_JOB_2
+func (m *Domain) SubscribeBlockJob(callback func(disk string, otype int32, status int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='BlockJob'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.BlockJob" || 3 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(string), v.Body[1].(int32), v.Body[2].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeBlockJob See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventBlockJobCallback Callback was registered using VIR_DOMAIN_EVENT_ID_BLOCK_JOB_2
+func (m *Domain) UnSubscribeBlockJob(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='BlockJob'")
+}
+
+// SubscribeControlError See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventGenericCallback
+func (m *Domain) SubscribeControlError(callback func()) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='ControlError'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.ControlError" || 0 != len(v.Body) {
+				continue
+			}
+			callback()
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeControlError See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventGenericCallback
+func (m *Domain) UnSubscribeControlError(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='ControlError'")
+}
+
+// SubscribeDeviceAdded See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDeviceAddedCallback
+func (m *Domain) SubscribeDeviceAdded(callback func(device string)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DeviceAdded'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.DeviceAdded" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(string))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeDeviceAdded See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDeviceAddedCallback
+func (m *Domain) UnSubscribeDeviceAdded(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DeviceAdded'")
+}
+
+// SubscribeDeviceRemovalFailed See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDeviceRemovalFailedCallback
+func (m *Domain) SubscribeDeviceRemovalFailed(callback func(device string)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DeviceRemovalFailed'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.DeviceRemovalFailed" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(string))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeDeviceRemovalFailed See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDeviceRemovalFailedCallback
+func (m *Domain) UnSubscribeDeviceRemovalFailed(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DeviceRemovalFailed'")
+}
+
+// SubscribeDeviceRemoved See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDeviceRemovedCallback
+func (m *Domain) SubscribeDeviceRemoved(callback func(device string)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DeviceRemoved'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.DeviceRemoved" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(string))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeDeviceRemoved See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDeviceRemovedCallback
+func (m *Domain) UnSubscribeDeviceRemoved(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DeviceRemoved'")
+}
+
+// SubscribeDiskChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDiskChangeCallback
+func (m *Domain) SubscribeDiskChange(callback func(oldSrcPath string, newSrcPath string, device string, reason int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DiskChange'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.DiskChange" || 4 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(string), v.Body[1].(string), v.Body[2].(string), v.Body[3].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeDiskChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventDiskChangeCallback
+func (m *Domain) UnSubscribeDiskChange(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='DiskChange'")
+}
+
+// SubscribeGraphics See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventGraphicsCallback
+func (m *Domain) SubscribeGraphics(callback func(phase int32, local interface{}, remote interface{}, authScheme string, identities []interface{})) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Graphics'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.Graphics" || 5 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32), v.Body[1].(interface{}), v.Body[2].(interface{}), v.Body[3].(string), v.Body[4].([]interface{}))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeGraphics See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventGraphicsCallback
+func (m *Domain) UnSubscribeGraphics(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Graphics'")
+}
+
+// SubscribeIOError See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventIOErrorReasonCallback
+func (m *Domain) SubscribeIOError(callback func(srcPath string, device string, action int32, reason string)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='IOError'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.IOError" || 4 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(string), v.Body[1].(string), v.Body[2].(int32), v.Body[3].(string))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeIOError See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventIOErrorReasonCallback
+func (m *Domain) UnSubscribeIOError(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='IOError'")
+}
+
+// SubscribeJobCompleted See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventJobCompletedCallback
+func (m *Domain) SubscribeJobCompleted(callback func(params map[string]interface{})) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='JobCompleted'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.JobCompleted" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(map[string]interface{}))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeJobCompleted See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventJobCompletedCallback
+func (m *Domain) UnSubscribeJobCompleted(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='JobCompleted'")
+}
+
+// SubscribeMetadataChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventMetadataChangeCallback
+func (m *Domain) SubscribeMetadataChange(callback func(otype int32, nsuri string)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='MetadataChange'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.MetadataChange" || 2 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32), v.Body[1].(string))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeMetadataChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventMetadataChangeCallback
+func (m *Domain) UnSubscribeMetadataChange(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='MetadataChange'")
+}
+
+// SubscribeMigrationIteration See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventMigrationIterationCallback
+func (m *Domain) SubscribeMigrationIteration(callback func(iteration int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='MigrationIteration'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.MigrationIteration" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeMigrationIteration See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventMigrationIterationCallback
+func (m *Domain) UnSubscribeMigrationIteration(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='MigrationIteration'")
+}
+
+// SubscribePMSuspend See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventPMSuspendCallback
+func (m *Domain) SubscribePMSuspend(callback func(reason int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='PMSuspend'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.PMSuspend" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribePMSuspend See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventPMSuspendCallback
+func (m *Domain) UnSubscribePMSuspend(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='PMSuspend'")
+}
+
+// SubscribePMSuspendDisk See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventPMSuspendDiskCallback
+func (m *Domain) SubscribePMSuspendDisk(callback func(reason int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='PMSuspendDisk'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.PMSuspendDisk" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribePMSuspendDisk See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventPMSuspendDiskCallback
+func (m *Domain) UnSubscribePMSuspendDisk(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='PMSuspendDisk'")
+}
+
+// SubscribePMWakeup See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventPMWakeupCallback
+func (m *Domain) SubscribePMWakeup(callback func(reason int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='PMWakeup'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.PMWakeup" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribePMWakeup See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventPMWakeupCallback
+func (m *Domain) UnSubscribePMWakeup(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='PMWakeup'")
+}
+
+// SubscribeReboot See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventGenericCallback
+func (m *Domain) SubscribeReboot(callback func()) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Reboot'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.Reboot" || 0 != len(v.Body) {
+				continue
+			}
+			callback()
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeReboot See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventGenericCallback
+func (m *Domain) UnSubscribeReboot(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Reboot'")
+}
+
+// SubscribeRTCChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventRTCChangeCallback
+func (m *Domain) SubscribeRTCChange(callback func(utcoffset int64)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='RTCChange'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.RTCChange" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int64))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeRTCChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventRTCChangeCallback
+func (m *Domain) UnSubscribeRTCChange(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='RTCChange'")
+}
+
+// SubscribeTrayChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventTrayChangeCallback
+func (m *Domain) SubscribeTrayChange(callback func(device string, reason int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='TrayChange'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.TrayChange" || 2 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(string), v.Body[1].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeTrayChange See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventTrayChangeCallback
+func (m *Domain) UnSubscribeTrayChange(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='TrayChange'")
+}
+
+// SubscribeTunable See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventTunableCallback
+func (m *Domain) SubscribeTunable(callback func(params map[string]interface{})) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Tunable'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.Tunable" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(map[string]interface{}))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeTunable See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventTunableCallback
+func (m *Domain) UnSubscribeTunable(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Tunable'")
+}
+
+// SubscribeWatchdog See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventWatchdogCallback
+func (m *Domain) SubscribeWatchdog(callback func(action int32)) <-chan *dbus.Signal {
+	if callback == nil {
+		return nil
+	}
+	m.sigmu.Lock()
+	ch := make(chan *dbus.Signal)
+	m.sigs[ch] = struct{}{}
+	m.conn.conn.Signal(ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Watchdog'")
+	go func() {
+		for v := range ch {
+			if v.Path != m.path || v.Name != "org.libvirt.Domain.Watchdog" || 1 != len(v.Body) {
+				continue
+			}
+			callback(v.Body[0].(int32))
+		}
+	}()
+	return ch
+}
+
+// UnSubscribeWatchdog See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectDomainEventWatchdogCallback
+func (m *Domain) UnSubscribeWatchdog(ch <-chan *dbus.Signal) {
+	m.sigmu.Lock()
+	delete(m.sigs, ch)
+	m.sigmu.Unlock()
+	m.conn.conn.BusObject().Call("org.freedesktop.DBus.RemoveMatch", 0, "type='signal',interface='org.libvirt.Domain',member='Watchdog'")
 }
 
 // AbortJob See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainAbortJob
