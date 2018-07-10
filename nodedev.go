@@ -50,7 +50,7 @@ func (m *NodeDevice) initConnection() error {
 		return err
 	}
 
-	m.object = m.conn.Object("org.libvirt.NodeDevice", dbus.ObjectPath("/org/libvirt/nodedev"))
+	m.object = m.conn.Object("org.libvirt", dbus.ObjectPath("/org/libvirt/QEMU"))
 
 	return nil
 }

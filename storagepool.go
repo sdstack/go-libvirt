@@ -53,7 +53,7 @@ func (m *StoragePool) initConnection() error {
 		return err
 	}
 
-	m.object = m.conn.Object("org.libvirt.StoragePool", dbus.ObjectPath("/org/libvirt/storagepool"))
+	m.object = m.conn.Object("org.libvirt", dbus.ObjectPath("/org/libvirt/QEMU"))
 
 	return nil
 }
@@ -95,7 +95,7 @@ func (m *StoragePool) GetXMLDesc(flags uint32) (xml string, err error) {
 }
 
 // ListStorageVolumes See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolListAllVolumes
-func (m *StoragePool) ListStorageVolumes(flags uint32) (storageVols []*StorageVol, err error) {
+func (m *StoragePool) ListStorageVolumes(flags uint32) (storageVols []dbus.ObjectPath, err error) {
 	err = m.object.Call("org.libvirt.StoragePool.ListStorageVolumes", 0, flags).Store(&storageVols)
 	return
 }
@@ -107,19 +107,19 @@ func (m *StoragePool) Refresh(flags uint32) (err error) {
 }
 
 // StorageVolCreateXML See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolCreateXML
-func (m *StoragePool) StorageVolCreateXML(xml string, flags uint32) (storageVol *StorageVol, err error) {
+func (m *StoragePool) StorageVolCreateXML(xml string, flags uint32) (storageVol dbus.ObjectPath, err error) {
 	err = m.object.Call("org.libvirt.StoragePool.StorageVolCreateXML", 0, xml, flags).Store(&storageVol)
 	return
 }
 
 // StorageVolCreateXMLFrom See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolCreateXMLFrom Call with @key argument set to the key of the storage volume to be cloned.
-func (m *StoragePool) StorageVolCreateXMLFrom(xml string, key string, flags uint32) (storageVol *StorageVol, err error) {
+func (m *StoragePool) StorageVolCreateXMLFrom(xml string, key string, flags uint32) (storageVol dbus.ObjectPath, err error) {
 	err = m.object.Call("org.libvirt.StoragePool.StorageVolCreateXMLFrom", 0, xml, key, flags).Store(&storageVol)
 	return
 }
 
 // StorageVolLookupByName See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolLookupByName
-func (m *StoragePool) StorageVolLookupByName(name string) (storageVol *StorageVol, err error) {
+func (m *StoragePool) StorageVolLookupByName(name string) (storageVol dbus.ObjectPath, err error) {
 	err = m.object.Call("org.libvirt.StoragePool.StorageVolLookupByName", 0, name).Store(&storageVol)
 	return
 }

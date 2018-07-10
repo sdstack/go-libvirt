@@ -51,7 +51,7 @@ func (m *Secret) initConnection() error {
 		return err
 	}
 
-	m.object = m.conn.Object("org.libvirt.Secret", dbus.ObjectPath("/org/libvirt/secret"))
+	m.object = m.conn.Object("org.libvirt", dbus.ObjectPath("/org/libvirt/QEMU"))
 
 	return nil
 }

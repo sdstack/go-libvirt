@@ -51,7 +51,7 @@ func (m *StorageVol) initConnection() error {
 		return err
 	}
 
-	m.object = m.conn.Object("org.libvirt.StorageVol", dbus.ObjectPath("/org/libvirt/storagevol"))
+	m.object = m.conn.Object("org.libvirt", dbus.ObjectPath("/org/libvirt/QEMU"))
 
 	return nil
 }

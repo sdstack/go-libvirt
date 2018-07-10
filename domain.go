@@ -57,7 +57,7 @@ func (m *Domain) initConnection() error {
 		return err
 	}
 
-	m.object = m.conn.Object("org.libvirt.Domain", dbus.ObjectPath("/org/libvirt/domain"))
+	m.object = m.conn.Object("org.libvirt", dbus.ObjectPath("/org/libvirt/QEMU"))
 
 	return nil
 }

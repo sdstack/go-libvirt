@@ -50,7 +50,7 @@ func (m *NWFilter) initConnection() error {
 		return err
 	}
 
-	m.object = m.conn.Object("org.libvirt.NWFilter", dbus.ObjectPath("/org/libvirt/nwfilter"))
+	m.object = m.conn.Object("org.libvirt", dbus.ObjectPath("/org/libvirt/QEMU"))
 
 	return nil
 }

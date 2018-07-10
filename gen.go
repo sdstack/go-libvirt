@@ -51,11 +51,11 @@ func GuessType(val string, arg string, obj string) (string, string) {
 		} else {
 			rtype += "[]"
 			dtype, dobj := GuessType(val, arg[1:], obj)
-			if arg[1] == 'o' {
-				rtype += dtype[:len(dtype)-1]
-			} else {
-				rtype += dtype
-			}
+			//if arg[1] == 'o' {
+			//				rtype += dtype[:len(dtype)-1]
+			//		} else {
+			rtype += dtype
+			//	}
 			robj = dobj
 		}
 	case 'y':
@@ -95,18 +95,21 @@ func GuessType(val string, arg string, obj string) (string, string) {
 		rtype = "uint"
 		robj = obj
 	case 'o':
-		switch val {
-		case "dev":
-			rtype = "*NodeDevice"
-		case "devs":
-			rtype = "*NodeDevices"
-		case "nwfilter":
-			rtype = "*NWFilter"
-		case "nwfilters":
-			rtype = "*NWFilters"
-		default:
-			rtype = "*" + strings.Title(val)
-		}
+		rtype = "dbus.ObjectPath"
+		/*
+			switch val {
+			case "dev":
+				rtype = "*NodeDevice"
+			case "devs":
+				rtype = "*NodeDevices"
+			case "nwfilter":
+				rtype = "*NWFilter"
+			case "nwfilters":
+				rtype = "*NWFilters"
+			default:
+				rtype = "*" + strings.Title(val)
+			}
+		*/
 		robj = obj
 	}
 	return rtype, robj
@@ -143,12 +146,13 @@ func main() {
 				//				parts := strings.Split(node.Name, "/")
 				//			return parts[len(parts)-1]
 			},
-			"OBJ_NAME":      func() string { return "obj" },
-			"ExportName":    func() string { return strings.Split(node.Interfaces[0].Name, ".")[2] },
-			"DbusPath":      func() string { return node.Name },
-			"DbusInterface": func() string { return node.Interfaces[0].Name },
-			"Normalize":     normalizeMethodName,
-			"Ifc2Obj":       ifc2obj,
+			"OBJ_NAME":       func() string { return "obj" },
+			"ExportName":     func() string { return strings.Split(node.Interfaces[0].Name, ".")[2] },
+			"DbusDest":       func() string { return "org.libvirt" },
+			"DbusObjectPath": func() string { return "/org/libvirt/QEMU" },
+			"DbusInterface":  func() string { return node.Interfaces[0].Name },
+			"Normalize":      normalizeMethodName,
+			"Ifc2Obj":        ifc2obj,
 			"AnnotationComment": func(s string) string {
 				var ret []string
 				parts := strings.Split(s, "\n")
