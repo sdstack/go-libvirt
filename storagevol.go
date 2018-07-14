@@ -66,19 +66,19 @@ func (m *StorageVol) Wipe(pattern uint32, flags uint32) (err error) {
 	return
 }
 
-// GetName See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetName// GetName const
+// GetName See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetName
 func (m *StorageVol) GetName() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StorageVol", "Name").Store(&v)
 	return
 }
 
-// GetKey See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetKey// GetKey const
+// GetKey See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetKey
 func (m *StorageVol) GetKey() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StorageVol", "Key").Store(&v)
 	return
 }
 
-// GetPath See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetPath// GetPath const
+// GetPath See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetPath
 func (m *StorageVol) GetPath() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StorageVol", "Path").Store(&v)
 	return

@@ -158,7 +158,7 @@ func (m *StoragePool) GetAutostart() (v bool, err error) {
 	return
 }
 
-// GetName See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetName// GetName const
+// GetName See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetName
 func (m *StoragePool) GetName() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StoragePool", "Name").Store(&v)
 	return
@@ -170,7 +170,7 @@ func (m *StoragePool) GetPersistent() (v bool, err error) {
 	return
 }
 
-// GetUUID See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetUUIDString// GetUUID const
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetUUIDString
 func (m *StoragePool) GetUUID() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StoragePool", "UUID").Store(&v)
 	return

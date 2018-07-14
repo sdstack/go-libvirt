@@ -482,7 +482,7 @@ func (m *Connect) StorageVolLookupByPath(path string) (storageVol dbus.ObjectPat
 	return
 }
 
-// GetEncrypted See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectIsEncrypted Note that monitoring of traffic on the D-Bus message bus is out of the scope of this property// GetEncrypted const
+// GetEncrypted See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectIsEncrypted Note that monitoring of traffic on the D-Bus message bus is out of the scope of this property
 func (m *Connect) GetEncrypted() (v bool, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Connect", "Encrypted").Store(&v)
 	return
@@ -500,7 +500,7 @@ func (m *Connect) GetLibVersion() (v uint64, err error) {
 	return
 }
 
-// GetSecure See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectIsSecure Note that monitoring of traffic on the D-Bus message bus is out of the scope of this property// GetSecure const
+// GetSecure See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectIsSecure Note that monitoring of traffic on the D-Bus message bus is out of the scope of this property
 func (m *Connect) GetSecure() (v bool, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Connect", "Secure").Store(&v)
 	return

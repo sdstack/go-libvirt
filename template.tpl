@@ -75,7 +75,7 @@ func (m *{{ExportName}}) UnSubscribe{{.Name}}(ch <-chan *dbus.Signal) {
 
 {{range .Methods}}
 {{$methodName := .Name}}
-{{- range .Annotations}}// {{$methodName}} {{AnnotationComment .Value}}
+{{- range .Annotations}}{{if eq .Name "org.gtk.GDBus.DocString"}}// {{$methodName}} {{AnnotationComment .Value}}{{end}}
 {{- end}}
 func (m *{{ExportName}}) {{.Name}}({{GetParamterInsProto .Args}}) ({{GetParamterOutsProto .Args}}{{with GetParamterOuts .Args}}, {{end}}err error) {
 	err = m.object.Call("{{DbusInterface}}.{{.Name}}", 0{{GetParamterNames .Args}}).Store({{GetParamterOuts .Args}})
@@ -85,13 +85,13 @@ func (m *{{ExportName}}) {{.Name}}({{GetParamterInsProto .Args}}) ({{GetParamter
 
 {{range .Properties}}
 {{$propName := .Name}}
-{{if PropWritable .}}{{range .Annotations}}// Set{{$propName}} {{AnnotationComment .Value}}{{end}}
+{{if PropWritable .}}{{range .Annotations}}{{if eq .Name "org.gtk.GDBus.DocString"}}// Set{{$propName}} {{AnnotationComment .Value}}{{end}}{{end}}
 func (m *{{ExportName}}) Set{{.Name}}(v {{GuessType .Name .Type ""}}) (err error) {
   err = m.object.Call("org.freedesktop.DBus.Properties.Set", 0, "{{DbusInterface}}", "{{.Name}}", dbus.MakeVariant(v)).Store()
   return
 }
 {{end}}
-{{- range .Annotations}}// Get{{$propName}} {{AnnotationComment .Value}}
+{{- range .Annotations}}{{if eq .Name "org.gtk.GDBus.DocString"}}// Get{{$propName}} {{AnnotationComment .Value}}{{end}}
 {{- end}}
 func (m *{{ExportName}}) Get{{.Name}}() (v {{GuessType .Name .Type ""}}, err error) {
   err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "{{DbusInterface}}", "{{.Name}}").Store(&v)

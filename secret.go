@@ -60,19 +60,19 @@ func (m *Secret) Undefine() (err error) {
 	return
 }
 
-// GetUUID See https://libvirt.org/html/libvirt-libvirt-secret.html#virSecretGetUUIDString// GetUUID const
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-secret.html#virSecretGetUUIDString
 func (m *Secret) GetUUID() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Secret", "UUID").Store(&v)
 	return
 }
 
-// GetUsageID See https://libvirt.org/html/libvirt-libvirt-secret.html#virSecretGetUsageID// GetUsageID const
+// GetUsageID See https://libvirt.org/html/libvirt-libvirt-secret.html#virSecretGetUsageID
 func (m *Secret) GetUsageID() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Secret", "UsageID").Store(&v)
 	return
 }
 
-// GetUsageType See https://libvirt.org/html/libvirt-libvirt-secret.html#virSecretGetUsageType// GetUsageType const
+// GetUsageType See https://libvirt.org/html/libvirt-libvirt-secret.html#virSecretGetUsageType
 func (m *Secret) GetUsageType() (v int32, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Secret", "UsageType").Store(&v)
 	return

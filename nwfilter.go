@@ -47,13 +47,13 @@ func (m *NWFilter) Undefine() (err error) {
 	return
 }
 
-// GetName See https://libvirt.org/html/libvirt-libvirt-nwfilter.html#virNWFilterGetName// GetName const
+// GetName See https://libvirt.org/html/libvirt-libvirt-nwfilter.html#virNWFilterGetName
 func (m *NWFilter) GetName() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.NWFilter", "Name").Store(&v)
 	return
 }
 
-// GetUUID See https://libvirt.org/html/libvirt-libvirt-nwfilter.html#virNWFilterGetUUIDString// GetUUID const
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-nwfilter.html#virNWFilterGetUUIDString
 func (m *NWFilter) GetUUID() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.NWFilter", "UUID").Store(&v)
 	return

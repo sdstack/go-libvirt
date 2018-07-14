@@ -1260,7 +1260,7 @@ func (m *Domain) GetUpdated() (v bool, err error) {
 	return
 }
 
-// GetUUID See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetUUIDString// GetUUID const
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetUUIDString
 func (m *Domain) GetUUID() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "UUID").Store(&v)
 	return

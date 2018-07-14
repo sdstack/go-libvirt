@@ -92,7 +92,7 @@ func (m *Network) GetAutostart() (v bool, err error) {
 	return
 }
 
-// GetName See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetName// GetName const
+// GetName See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetName
 func (m *Network) GetName() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Network", "Name").Store(&v)
 	return
@@ -104,7 +104,7 @@ func (m *Network) GetPersistent() (v bool, err error) {
 	return
 }
 
-// GetUUID See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetUUIDString// GetUUID const
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetUUIDString
 func (m *Network) GetUUID() (v string, err error) {
 	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Network", "UUID").Store(&v)
 	return
