@@ -14,11 +14,11 @@ type Network struct {
 	sigs  map[<-chan *dbus.Signal]struct{}
 	sigmu sync.Mutex
 
-	Active     uint
-	Autostart  uint
-	Name       string
-	Persistent uint
-	UUID       string
+	//Active bool
+	//Autostart bool
+	//Name string
+	//Persistent bool
+	//UUID string
 }
 
 // NewNetwork() TODO
@@ -31,7 +31,9 @@ func NewNetwork(c *Conn, path dbus.ObjectPath) *Network {
 	}
 	m.path = c.object.Path()
 
+	m.sigmu.Lock()
 	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+	m.sigmu.Unlock()
 
 	return m
 }
@@ -69,5 +71,41 @@ func (m *Network) Undefine() (err error) {
 // Update See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkUpdate
 func (m *Network) Update(command uint32, section uint32, parentIndex int32, xml string, flags uint32) (err error) {
 	err = m.object.Call("org.libvirt.Network.Update", 0, command, section, parentIndex, xml, flags).Store()
+	return
+}
+
+// GetActive See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkIsActive
+func (m *Network) GetActive() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Network", "Active").Store(&v)
+	return
+}
+
+// SetAutostart See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetAutostart and https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkSetAutostart
+func (m *Network) SetAutostart(v bool) (err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Set", 0, "org.libvirt.Network", "Autostart", dbus.MakeVariant(v)).Store()
+	return
+}
+
+// GetAutostart See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetAutostart and https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkSetAutostart
+func (m *Network) GetAutostart() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Network", "Autostart").Store(&v)
+	return
+}
+
+// GetName See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetName// GetName const
+func (m *Network) GetName() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Network", "Name").Store(&v)
+	return
+}
+
+// GetPersistent See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkIsPersistent
+func (m *Network) GetPersistent() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Network", "Persistent").Store(&v)
+	return
+}
+
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-network.html#virNetworkGetUUIDString// GetUUID const
+func (m *Network) GetUUID() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Network", "UUID").Store(&v)
 	return
 }

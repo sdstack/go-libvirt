@@ -14,11 +14,11 @@ type StoragePool struct {
 	sigs  map[<-chan *dbus.Signal]struct{}
 	sigmu sync.Mutex
 
-	Active     uint
-	Autostart  uint
-	Name       string
-	Persistent uint
-	UUID       string
+	//Active bool
+	//Autostart bool
+	//Name string
+	//Persistent bool
+	//UUID string
 }
 
 // NewStoragePool() TODO
@@ -31,7 +31,9 @@ func NewStoragePool(c *Conn, path dbus.ObjectPath) *StoragePool {
 	}
 	m.path = c.object.Path()
 
+	m.sigmu.Lock()
 	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+	m.sigmu.Unlock()
 
 	return m
 }
@@ -135,5 +137,41 @@ func (m *StoragePool) StorageVolLookupByName(name string) (storageVol dbus.Objec
 // Undefine See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolUndefine
 func (m *StoragePool) Undefine() (err error) {
 	err = m.object.Call("org.libvirt.StoragePool.Undefine", 0).Store()
+	return
+}
+
+// GetActive See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolIsActive
+func (m *StoragePool) GetActive() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StoragePool", "Active").Store(&v)
+	return
+}
+
+// SetAutostart See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetAutostart https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolSetAutostart
+func (m *StoragePool) SetAutostart(v bool) (err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Set", 0, "org.libvirt.StoragePool", "Autostart", dbus.MakeVariant(v)).Store()
+	return
+}
+
+// GetAutostart See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetAutostart https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolSetAutostart
+func (m *StoragePool) GetAutostart() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StoragePool", "Autostart").Store(&v)
+	return
+}
+
+// GetName See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetName// GetName const
+func (m *StoragePool) GetName() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StoragePool", "Name").Store(&v)
+	return
+}
+
+// GetPersistent See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolIsPersistent
+func (m *StoragePool) GetPersistent() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StoragePool", "Persistent").Store(&v)
+	return
+}
+
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolGetUUIDString// GetUUID const
+func (m *StoragePool) GetUUID() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StoragePool", "UUID").Store(&v)
 	return
 }

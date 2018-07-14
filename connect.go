@@ -14,11 +14,11 @@ type Connect struct {
 	sigs  map[<-chan *dbus.Signal]struct{}
 	sigmu sync.Mutex
 
-	Encrypted  uint
-	Hostname   string
-	LibVersion uint64
-	Secure     uint
-	Version    uint64
+	//Encrypted bool
+	//Hostname string
+	//LibVersion uint64
+	//Secure bool
+	//Version uint64
 }
 
 // NewConnect() TODO
@@ -31,7 +31,9 @@ func NewConnect(c *Conn, path dbus.ObjectPath) *Connect {
 	}
 	m.path = c.object.Path()
 
+	m.sigmu.Lock()
 	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+	m.sigmu.Unlock()
 
 	return m
 }
@@ -385,7 +387,7 @@ func (m *Connect) NWFilterLookupByUUID(uuid string) (nwfilter dbus.ObjectPath, e
 }
 
 // NodeGetCPUMap See https://libvirt.org/html/libvirt-libvirt-host.html#virNodeGetCPUMap
-func (m *Connect) NodeGetCPUMap(flags uint32) (res []uint, err error) {
+func (m *Connect) NodeGetCPUMap(flags uint32) (res []bool, err error) {
 	err = m.object.Call("org.libvirt.Connect.NodeGetCPUMap", 0, flags).Store(&res)
 	return
 }
@@ -477,5 +479,35 @@ func (m *Connect) StorageVolLookupByKey(key string) (storageVol dbus.ObjectPath,
 // StorageVolLookupByPath See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolLookupByPath
 func (m *Connect) StorageVolLookupByPath(path string) (storageVol dbus.ObjectPath, err error) {
 	err = m.object.Call("org.libvirt.Connect.StorageVolLookupByPath", 0, path).Store(&storageVol)
+	return
+}
+
+// GetEncrypted See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectIsEncrypted Note that monitoring of traffic on the D-Bus message bus is out of the scope of this property// GetEncrypted const
+func (m *Connect) GetEncrypted() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Connect", "Encrypted").Store(&v)
+	return
+}
+
+// GetHostname See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectGetHostname
+func (m *Connect) GetHostname() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Connect", "Hostname").Store(&v)
+	return
+}
+
+// GetLibVersion See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectGetLibVersion
+func (m *Connect) GetLibVersion() (v uint64, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Connect", "LibVersion").Store(&v)
+	return
+}
+
+// GetSecure See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectIsSecure Note that monitoring of traffic on the D-Bus message bus is out of the scope of this property// GetSecure const
+func (m *Connect) GetSecure() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Connect", "Secure").Store(&v)
+	return
+}
+
+// GetVersion See https://libvirt.org/html/libvirt-libvirt-host.html#virConnectGetVersion
+func (m *Connect) GetVersion() (v uint64, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Connect", "Version").Store(&v)
 	return
 }

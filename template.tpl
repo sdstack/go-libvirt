@@ -11,12 +11,13 @@ type {{ExportName}} struct {
 	conn   *Conn
 	object dbus.BusObject
 	path dbus.ObjectPath
+
   {{if or .Properties .Signals}}
   sigs map[<-chan *dbus.Signal]struct{}
   sigmu sync.Mutex
   {{end}}
 	{{range .Properties}}
-	{{.Name}} {{GuessType .Name .Type DbusInterface}}{{end}}
+	//{{.Name}} {{GuessType .Name .Type DbusInterface}}{{end}}
 }
 
 // New{{ExportName}}() TODO
@@ -28,8 +29,11 @@ func New{{ExportName}}(c *Conn, path dbus.ObjectPath) (*{{ExportName}}) {
     m.object = c.object
   }
   m.path = c.object.Path()
+
   {{if or .Properties .Signals}}
+  m.sigmu.Lock()
   m.sigs = make(map[<-chan *dbus.Signal]struct{})
+  m.sigmu.Unlock()
   {{end}}
 	return m
 }
@@ -76,5 +80,21 @@ func (m *{{ExportName}}) UnSubscribe{{.Name}}(ch <-chan *dbus.Signal) {
 func (m *{{ExportName}}) {{.Name}}({{GetParamterInsProto .Args}}) ({{GetParamterOutsProto .Args}}{{with GetParamterOuts .Args}}, {{end}}err error) {
 	err = m.object.Call("{{DbusInterface}}.{{.Name}}", 0{{GetParamterNames .Args}}).Store({{GetParamterOuts .Args}})
 	return
+}
+{{end}}
+
+{{range .Properties}}
+{{$propName := .Name}}
+{{if PropWritable .}}{{range .Annotations}}// Set{{$propName}} {{AnnotationComment .Value}}{{end}}
+func (m *{{ExportName}}) Set{{.Name}}(v {{GuessType .Name .Type ""}}) (err error) {
+  err = m.object.Call("org.freedesktop.DBus.Properties.Set", 0, "{{DbusInterface}}", "{{.Name}}", dbus.MakeVariant(v)).Store()
+  return
+}
+{{end}}
+{{- range .Annotations}}// Get{{$propName}} {{AnnotationComment .Value}}
+{{- end}}
+func (m *{{ExportName}}) Get{{.Name}}() (v {{GuessType .Name .Type ""}}, err error) {
+  err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "{{DbusInterface}}", "{{.Name}}").Store(&v)
+  return
 }
 {{end}}

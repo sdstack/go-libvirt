@@ -14,15 +14,15 @@ type Domain struct {
 	sigs  map[<-chan *dbus.Signal]struct{}
 	sigmu sync.Mutex
 
-	Active        uint
-	Autostart     uint
-	Id            uint32
-	Name          string
-	OSType        string
-	Persistent    uint
-	SchedulerType interface{}
-	Updated       uint
-	UUID          string
+	//Active bool
+	//Autostart bool
+	//Id uint32
+	//Name string
+	//OSType string
+	//Persistent bool
+	//SchedulerType interface{}
+	//Updated bool
+	//UUID string
 }
 
 // NewDomain() TODO
@@ -35,7 +35,9 @@ func NewDomain(c *Conn, path dbus.ObjectPath) *Domain {
 	}
 	m.path = c.object.Path()
 
+	m.sigmu.Lock()
 	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+	m.sigmu.Unlock()
 
 	return m
 }
@@ -821,7 +823,7 @@ func (m *Domain) GetDiskErrors(flags uint32) (diskErrors []interface{}, err erro
 }
 
 // GetEmulatorPinInfo See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetEmulatorPinInfo
-func (m *Domain) GetEmulatorPinInfo(flags uint32) (cpumap []uint, err error) {
+func (m *Domain) GetEmulatorPinInfo(flags uint32) (cpumap []bool, err error) {
 	err = m.object.Call("org.libvirt.Domain.GetEmulatorPinInfo", 0, flags).Store(&cpumap)
 	return
 }
@@ -923,7 +925,7 @@ func (m *Domain) GetTime(flags uint32) (time interface{}, err error) {
 }
 
 // GetVcpuPinInfo See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetVcpuPinInfo
-func (m *Domain) GetVcpuPinInfo(flags uint32) (vcpuPinInfo [][]uint, err error) {
+func (m *Domain) GetVcpuPinInfo(flags uint32) (vcpuPinInfo [][]bool, err error) {
 	err = m.object.Call("org.libvirt.Domain.GetVcpuPinInfo", 0, flags).Store(&vcpuPinInfo)
 	return
 }
@@ -941,7 +943,7 @@ func (m *Domain) GetXMLDesc(flags uint32) (xml string, err error) {
 }
 
 // HasManagedSaveImage See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainHasManagedSaveImage
-func (m *Domain) HasManagedSaveImage(flags uint32) (managedSaveImage uint, err error) {
+func (m *Domain) HasManagedSaveImage(flags uint32) (managedSaveImage bool, err error) {
 	err = m.object.Call("org.libvirt.Domain.HasManagedSaveImage", 0, flags).Store(&managedSaveImage)
 	return
 }
@@ -1031,19 +1033,19 @@ func (m *Domain) OpenGraphicsFD(idx uint32, flags uint32) (fd uint32, err error)
 }
 
 // PinEmulator See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainPinEmulator
-func (m *Domain) PinEmulator(cpumap []uint, flags uint32) (err error) {
+func (m *Domain) PinEmulator(cpumap []bool, flags uint32) (err error) {
 	err = m.object.Call("org.libvirt.Domain.PinEmulator", 0, cpumap, flags).Store()
 	return
 }
 
 // PinIOThread See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainPinIOThread
-func (m *Domain) PinIOThread(iothreadId uint32, cpumap []uint, flags uint32) (err error) {
+func (m *Domain) PinIOThread(iothreadId uint32, cpumap []bool, flags uint32) (err error) {
 	err = m.object.Call("org.libvirt.Domain.PinIOThread", 0, iothreadId, cpumap, flags).Store()
 	return
 }
 
 // PinVcpu See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainPinVcpuFlags
-func (m *Domain) PinVcpu(vcpu uint32, cpumap []uint, flags uint32) (err error) {
+func (m *Domain) PinVcpu(vcpu uint32, cpumap []bool, flags uint32) (err error) {
 	err = m.object.Call("org.libvirt.Domain.PinVcpu", 0, vcpu, cpumap, flags).Store()
 	return
 }
@@ -1109,7 +1111,7 @@ func (m *Domain) SetBlockIOTune(disk string, params map[string]interface{}, flag
 }
 
 // SetGuestVcpus See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainSetGuestVcpus
-func (m *Domain) SetGuestVcpus(vcpumap []uint, state int32, flags uint32) (err error) {
+func (m *Domain) SetGuestVcpus(vcpumap []bool, state int32, flags uint32) (err error) {
 	err = m.object.Call("org.libvirt.Domain.SetGuestVcpus", 0, vcpumap, state, flags).Store()
 	return
 }
@@ -1201,5 +1203,65 @@ func (m *Domain) Undefine(flags uint32) (err error) {
 // UpdateDevice See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainUpdateDeviceFlags
 func (m *Domain) UpdateDevice(xml string, flags uint32) (err error) {
 	err = m.object.Call("org.libvirt.Domain.UpdateDevice", 0, xml, flags).Store()
+	return
+}
+
+// GetActive See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainIsActive
+func (m *Domain) GetActive() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "Active").Store(&v)
+	return
+}
+
+// SetAutostart See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetAutostart and https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainSetAutostart
+func (m *Domain) SetAutostart(v bool) (err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Set", 0, "org.libvirt.Domain", "Autostart", dbus.MakeVariant(v)).Store()
+	return
+}
+
+// GetAutostart See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetAutostart and https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainSetAutostart
+func (m *Domain) GetAutostart() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "Autostart").Store(&v)
+	return
+}
+
+// GetId See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetID
+func (m *Domain) GetId() (v uint32, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "Id").Store(&v)
+	return
+}
+
+// GetName See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetName
+func (m *Domain) GetName() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "Name").Store(&v)
+	return
+}
+
+// GetOSType See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetOSType
+func (m *Domain) GetOSType() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "OSType").Store(&v)
+	return
+}
+
+// GetPersistent See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainIsPersistent
+func (m *Domain) GetPersistent() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "Persistent").Store(&v)
+	return
+}
+
+// GetSchedulerType See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetSchedulerType
+func (m *Domain) GetSchedulerType() (v interface{}, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "SchedulerType").Store(&v)
+	return
+}
+
+// GetUpdated See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainIsUpdated
+func (m *Domain) GetUpdated() (v bool, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "Updated").Store(&v)
+	return
+}
+
+// GetUUID See https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainGetUUIDString// GetUUID const
+func (m *Domain) GetUUID() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.Domain", "UUID").Store(&v)
 	return
 }

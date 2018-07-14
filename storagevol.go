@@ -14,9 +14,9 @@ type StorageVol struct {
 	sigs  map[<-chan *dbus.Signal]struct{}
 	sigmu sync.Mutex
 
-	Name string
-	Key  string
-	Path string
+	//Name string
+	//Key string
+	//Path string
 }
 
 // NewStorageVol() TODO
@@ -29,7 +29,9 @@ func NewStorageVol(c *Conn, path dbus.ObjectPath) *StorageVol {
 	}
 	m.path = c.object.Path()
 
+	m.sigmu.Lock()
 	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+	m.sigmu.Unlock()
 
 	return m
 }
@@ -61,5 +63,23 @@ func (m *StorageVol) Resize(capacity uint64, flags uint32) (err error) {
 // Wipe See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolWipePattern
 func (m *StorageVol) Wipe(pattern uint32, flags uint32) (err error) {
 	err = m.object.Call("org.libvirt.StorageVol.Wipe", 0, pattern, flags).Store()
+	return
+}
+
+// GetName See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetName// GetName const
+func (m *StorageVol) GetName() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StorageVol", "Name").Store(&v)
+	return
+}
+
+// GetKey See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetKey// GetKey const
+func (m *StorageVol) GetKey() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StorageVol", "Key").Store(&v)
+	return
+}
+
+// GetPath See https://libvirt.org/html/libvirt-libvirt-storage.html#virStorageVolGetPath// GetPath const
+func (m *StorageVol) GetPath() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.StorageVol", "Path").Store(&v)
 	return
 }

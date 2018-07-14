@@ -36,5 +36,11 @@ func TestListDomains(t *testing.T) {
 
 	ch := conn.SubscribeDomainEvent(DomainEventCb)
 	defer conn.UnSubscribeDomainEvent(ch)
+
+	st, err := domain.GetAutostart()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("autostart %#+v\n", st)
 	select {}
 }

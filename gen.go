@@ -92,7 +92,7 @@ func GuessType(val string, arg string, obj string) (string, string) {
 		rtype = "interface{}"
 		robj = obj
 	case 'b':
-		rtype = "uint"
+		rtype = "bool"
 		robj = obj
 	case 'o':
 		rtype = "dbus.ObjectPath"

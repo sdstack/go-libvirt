@@ -14,8 +14,8 @@ type NodeDevice struct {
 	sigs  map[<-chan *dbus.Signal]struct{}
 	sigmu sync.Mutex
 
-	Name   string
-	Parent string
+	//Name string
+	//Parent string
 }
 
 // NewNodeDevice() TODO
@@ -28,7 +28,9 @@ func NewNodeDevice(c *Conn, path dbus.ObjectPath) *NodeDevice {
 	}
 	m.path = c.object.Path()
 
+	m.sigmu.Lock()
 	m.sigs = make(map[<-chan *dbus.Signal]struct{})
+	m.sigmu.Unlock()
 
 	return m
 }
@@ -66,5 +68,17 @@ func (m *NodeDevice) ReAttach() (err error) {
 // Reset See https://libvirt.org/html/libvirt-libvirt-nodedev.html#virNodeDeviceReset
 func (m *NodeDevice) Reset() (err error) {
 	err = m.object.Call("org.libvirt.NodeDevice.Reset", 0).Store()
+	return
+}
+
+// GetName See https://libvirt.org/html/libvirt-libvirt-nodedev.html#virNodeDeviceGetName// GetName const
+func (m *NodeDevice) GetName() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.NodeDevice", "Name").Store(&v)
+	return
+}
+
+// GetParent See https://libvirt.org/html/libvirt-libvirt-nodedev.html#virNodeDeviceGetParent// GetParent const
+func (m *NodeDevice) GetParent() (v string, err error) {
+	err = m.object.Call("org.freedesktop.DBus.Properties.Get", 0, "org.libvirt.NodeDevice", "Parent").Store(&v)
 	return
 }
