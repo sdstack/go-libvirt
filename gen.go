@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"text/template"
@@ -116,27 +116,25 @@ func GuessType(val string, arg string, obj string) (string, string) {
 }
 func main() {
 	var err error
-	var r *os.File
 
 	tplbuf, err := ioutil.ReadFile("template.tpl")
 	if err != nil {
 		panic(err)
 	}
-	ifaces, err := filepath.Glob("data/*.xml")
-	if err != nil {
-		panic(err)
-	}
+	httpPref := "https://raw.githubusercontent.com/libvirt/libvirt-dbus/master/data/"
+	ifaces := []string{"Connect", "Domain", "NWFilter", "Network", "NodeDevice", "Secret", "StoragePool", "StorageVol"}
 	for _, iface := range ifaces {
-		r, err = os.Open(iface)
+		res, err := http.Get(httpPref + "org.libvirt." + iface + ".xml")
 		if err != nil {
 			panic(err)
 		}
-		dec := xml.NewDecoder(r)
+		dec := xml.NewDecoder(res.Body)
 		var node introspect.Node
-		if err = dec.Decode(&node); err != nil {
+		err = dec.Decode(&node)
+		res.Body.Close()
+		if err != nil {
 			panic(err)
 		}
-		r.Close()
 
 		funcs := template.FuncMap{
 			"Lower": strings.ToLower,
