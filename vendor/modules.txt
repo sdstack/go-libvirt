@@ -1,0 +1,2 @@
+# github.com/godbus/dbus v4.1.0+incompatible
+github.com/godbus/dbus
