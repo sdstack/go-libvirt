@@ -290,9 +290,51 @@ func (m *Connect) GetSysinfo(flags uint32) (sysinfo string, err error) {
 	return
 }
 
+// InterfaceChangeBegin See https://libvirt.org/html/libvirt-libvirt-interface.html#virInterfaceChangeBegin
+func (m *Connect) InterfaceChangeBegin(flags uint32) (err error) {
+	err = m.object.Call("org.libvirt.Connect.InterfaceChangeBegin", 0, flags).Store()
+	return
+}
+
+// InterfaceChangeCommit See https://libvirt.org/html/libvirt-libvirt-interface.html#virInterfaceChangeCommit
+func (m *Connect) InterfaceChangeCommit(flags uint32) (err error) {
+	err = m.object.Call("org.libvirt.Connect.InterfaceChangeCommit", 0, flags).Store()
+	return
+}
+
+// InterfaceChangeRollback See https://libvirt.org/html/libvirt-libvirt-interface.html#virInterfaceChangeRollback
+func (m *Connect) InterfaceChangeRollback(flags uint32) (err error) {
+	err = m.object.Call("org.libvirt.Connect.InterfaceChangeRollback", 0, flags).Store()
+	return
+}
+
+// InterfaceDefineXML See https://libvirt.org/html/libvirt-libvirt-interface.html#virInterfaceDefineXML
+func (m *Connect) InterfaceDefineXML(xml string, flags uint32) (ointerface dbus.ObjectPath, err error) {
+	err = m.object.Call("org.libvirt.Connect.InterfaceDefineXML", 0, xml, flags).Store(&ointerface)
+	return
+}
+
+// InterfaceLookupByMAC See https://libvirt.org/html/libvirt-libvirt-interface.html#virInterfaceLookupByMACString
+func (m *Connect) InterfaceLookupByMAC(mac string) (ointerface dbus.ObjectPath, err error) {
+	err = m.object.Call("org.libvirt.Connect.InterfaceLookupByMAC", 0, mac).Store(&ointerface)
+	return
+}
+
+// InterfaceLookupByName See https://libvirt.org/html/libvirt-libvirt-interface.html#virInterfaceLookupByName
+func (m *Connect) InterfaceLookupByName(name string) (ointerface dbus.ObjectPath, err error) {
+	err = m.object.Call("org.libvirt.Connect.InterfaceLookupByName", 0, name).Store(&ointerface)
+	return
+}
+
 // ListDomains See https://libvirt.org/html/libvirt-libvirt-domain.html#virConnectListAllDomains
 func (m *Connect) ListDomains(flags uint32) (domains []dbus.ObjectPath, err error) {
 	err = m.object.Call("org.libvirt.Connect.ListDomains", 0, flags).Store(&domains)
+	return
+}
+
+// ListInterfaces See https://libvirt.org/html/libvirt-libvirt-interface.html#virConnectListAllInterfaces
+func (m *Connect) ListInterfaces(flags uint32) (interfaces []dbus.ObjectPath, err error) {
+	err = m.object.Call("org.libvirt.Connect.ListInterfaces", 0, flags).Store(&interfaces)
 	return
 }
 

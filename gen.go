@@ -122,7 +122,7 @@ func main() {
 		panic(err)
 	}
 	httpPref := "https://raw.githubusercontent.com/libvirt/libvirt-dbus/master/data/"
-	ifaces := []string{"Connect", "Domain", "NWFilter", "Network", "NodeDevice", "Secret", "StoragePool", "StorageVol"}
+	ifaces := []string{"Connect", "Domain", "Interface", "NWFilter", "Network", "NodeDevice", "Secret", "StoragePool", "StorageVol"}
 	for _, iface := range ifaces {
 		res, err := http.Get(httpPref + "org.libvirt." + iface + ".xml")
 		if err != nil {
